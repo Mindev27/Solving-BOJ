@@ -4,7 +4,7 @@
 
 int main(void) {
     int b , sum = 0;
-    char n[5];
+    char n[4];
 
     scanf("%s %d", n, &b);
     for (int i = 0 , j = strlen(n) ; i < strlen(n); i++ , j--) {
