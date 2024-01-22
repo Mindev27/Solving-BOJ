@@ -14,8 +14,8 @@ void solve() {
   ll rSqare = R * R;
 
   ll cnt = 0;
-  for(ll x = 0, y = R - 1; x <= R && y >= 0;) {
-    ll dist = (x + 1) * (x + 1) + y * y;
+  for(ll x = 1, y = R - 1; x <= R + 1 && y >= 0;) {
+    ll dist = x * x + y * y;
 
     if(dist < rSqare) { // 포함되는 경우
       x++; cnt++;
