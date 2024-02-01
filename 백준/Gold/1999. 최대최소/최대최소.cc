@@ -27,15 +27,13 @@ void input() {
 }
 
 void preprocess() {
-  // Initialize min and max boards
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
       minBoard[i][j] = INF;
       maxBoard[i][j] = -INF;
     }
   }
-
-  // Calculate min and max for each BxB block
+  
   for (int i = 0; i <= N - B; i++) {
     for (int j = 0; j <= N - B; j++) {
       for (int k = 0; k < B; k++) {
