@@ -13,7 +13,7 @@
 
 using namespace std;
 
-const int INF = 9999999;
+const int INF = 999999999;
 int N;
 vector<int> a; // 1의 위치를 저장
 
@@ -26,66 +26,76 @@ void input() {
 }
 
 // 왼쪽 밀고 오른쪽
-pair<int, string> calcL(int i) {
-  if(i == a.size() - 1) return {INF, ""};
+pair<pii, int> calcL(int i) {
+  if(i == a.size() - 1) return {{INF, INF}, 1};
 
-  int cnt = a[i]; // 먼저 왼쪽으로 밀어서 제거
-  string s = string(a[i], 'L');
+  int left = a[i]; // 먼저 왼쪽으로 밀어서 제거
   
-  int nextPoint = a[i + 1] - cnt; // 바로 오른쪽 1의 위치
+  int nextPoint = a[i + 1] - left; // 바로 오른쪽 1의 위치
 
   // 얘를 오른쪽으로 밀어서 제거
-  cnt += N - nextPoint + 1;
-  s += string(N - nextPoint + 1, 'R');
+  int right = N - nextPoint + 1;
 
-  return {cnt, s};
+  return {{left, right}, 1};
 }
 
 
 // 오른쪽 밀고 왼쪽
-pair<int, string> calcR(int i) {
-  if(i == 0) return {INF, ""};
+pair<pii, int> calcR(int i) {
+  if(i == 0) return {{INF, INF}, 1};
   
-  int cnt = N - a[i] + 1; // 오른쪽으로 밀어서 제거
-  string s = string(N - a[i] + 1, 'R');
+  int right = N - a[i] + 1; // 오른쪽으로 밀어서 제거
   
-  int nextPoint = a[i - 1] + cnt; // 바로 왼쪽 1의 위치
+  int nextPoint = a[i - 1] + right; // 바로 왼쪽 1의 위치
 
   // 얘를 왼쪽으로 밀어서 제거
-  cnt += nextPoint;
-  s += string(nextPoint, 'L');
+  int left = nextPoint;
 
-  return {cnt, s};
+  return {{left, right}, -1};
 }
 
 // 왼 -> 오 or 오 -> 왼이 최선
 void solve() {
   int ans = INF;
-  string result = "";
+  pii ansLen = {0, 0};
+  int dir = 0; // 1은 L먼저 -1은 R먼저
+  
   for(int i = 0; i < a.size(); i++) {
     auto curL = calcL(i);
-    if(curL.X < ans) {
-      ans = curL.X;
-      result = curL.Y;
+    if(curL.X.X + curL.X.Y < ans) {
+      ans = curL.X.X + curL.X.Y;
+      ansLen = {curL.X.X, curL.X.Y};
+      dir = curL.Y;
     }
     auto curR = calcR(i);
-    if(curR.X < ans) {
-      ans = curR.X;
-      result = curR.Y;
+    if(curR.X.X + curR.X.Y < ans) {
+      ans = curR.X.X + curR.X.Y;
+      ansLen = {curR.X.X, curR.X.Y};
+      dir = curR.Y;
     }
   }
 
   // L또는 R만 하는 경우
   if(ans > a.back()) {
     ans = a.back();
-    result = string(a.back(), 'L');
+    ansLen = {a.back(), 0};
+    dir = 1;
   }
   if(ans > N - a.front() + 1) {
     ans = N - a.front() + 1;
-    result = string(N - a.front() + 1, 'R');
+    ansLen = {0, N - a.front() + 1};
+    dir = -1;
   }
 
-  cout << ans << '\n' << result;
+  cout << ans << '\n';
+  if(dir == 1) {
+    for(int i = 0; i < ansLen.X; i++) cout << 'L';
+    for(int i = 0; i < ansLen.Y; i++) cout << 'R';
+  }
+  else {
+    for(int i = 0; i < ansLen.Y; i++) cout << 'R';
+    for(int i = 0; i < ansLen.X; i++) cout << 'L';
+  }
 }
 
 int main() {
