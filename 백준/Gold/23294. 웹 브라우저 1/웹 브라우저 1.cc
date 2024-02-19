@@ -34,35 +34,11 @@ void input() {
   }
 }
 
-// 디버깅용
-void check(pair<char, int> cur, int backCache, int frontCache) {
-  cout << backCache << ' ' << cur.Y << ' ' << frontCache << '\n';
-  int Bsz = B.size();
-  int Fsz = F.size();
-  cout << "B : ";
-  while(Bsz--) {
-    auto curB = B.back();
-    cout << curB.X << ' ';
-    B.pop_back();
-    B.push_front(curB);
-  }
-  cout << '\n';
-  cout << "F : ";
-  while(Fsz--) {
-    auto curF = F.back();
-    cout << curF.X << ' ';
-    F.pop_back();
-    F.push_front(curF);
-  }
-  cout << '\n' << '\n';
-}
-
 void solve() {
   pii cur = {-1, 0}; // 현재 접속 페이지, 캐시
   int backCache = 0, frontCache = 0;
   
   for (auto &q : query) {
-    // cout << "query : " << q.X << " " << q.Y << '\n';
     if(q.X == 'B') {
       if(B.empty()) continue;
       F.push_back(cur);
@@ -115,8 +91,6 @@ void solve() {
         B.pop_front();
       }
     }
-
-    // check(cur, backCache, frontCache);
   }
 
   // 답 출력
