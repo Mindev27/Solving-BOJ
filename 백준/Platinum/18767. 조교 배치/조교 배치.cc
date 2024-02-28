@@ -1,9 +1,9 @@
 #include <algorithm>
-#include <cmath>
-#include <cstring>
 #include <iostream>
 #include <queue>
 #include <vector>
+#include <cstring>
+#include <limits>
 
 #define ll long long
 #define X first
@@ -13,104 +13,121 @@
 
 using namespace std;
 
-const int MAX = 110;
-const int INF = 1e9;
+const int MAX = 10010;
+const int INF = numeric_limits<int>::max();
+
+struct Edge {
+  int to, capacity, flow;
+  Edge *reverse;
+  Edge(int to, int capacity) : to(to), capacity(capacity), flow(0), reverse(nullptr) {}
+
+  int residual() const { return capacity - flow; }
+  void addFlow(int amount) {
+    flow += amount;
+    reverse->flow -= amount;
+  }
+};
+
+vector<Edge*> adj[MAX];
 int N, S, T;
-int capacity[MAX][MAX]; // 용량
-int flow[MAX][MAX];     // 유량
-vector<int> adj[MAX];   // 각 정점에서 출발하는 간선 정보
+int level[MAX];
+int work[MAX];
 
-void init() {
-  memset(capacity, 0, sizeof(capacity));
-  memset(flow, 0, sizeof(flow));
-  for (int i = 0; i < MAX; i++) {
-    adj[i].clear();
-  }
+void addEdge(int from, int to, int capacity) {
+  Edge *forward = new Edge(to, capacity), *backward = new Edge(from, 0);
+  forward->reverse = backward;
+  backward->reverse = forward;
+  adj[from].push_back(forward);
+  adj[to].push_back(backward);
 }
 
-// 소스: 0, 보조조교: 1 ~ N,
-// 실험실(A~C): N+1 ~ N+3, 싱크: N + 4
-void input() {
-  cin >> N;
-  S = 0;
-  T = N + 4;
+bool bfs() {
+  fill(level, level + MAX, -1);
+  queue<int> q;
+  level[S] = 0;
+  q.push(S);
 
-  // S에서 보조조교 간선 정보 만들
-  for(int i = 1; i <= N; i++) {
-    adj[S].push_back(i);
-    capacity[S][i] = 1;
-  }
+  while (!q.empty()) {
+    int cur = q.front(); q.pop();
 
-  // 실험실 용량 입력
-  for(int i = 1; i <= 3; i++) {
-    int x; cin >> x;
-    capacity[N + i][T] = x;
-    adj[N + i].push_back(T);
-  }
-
-  for(int i = 1; i <= 3; i++) {
-    int lab = N + i;     // 실험실 번호
-    int num; cin >> num; // 실험실에 지원한 인원
-    
-    for(int j = 0; j < num; j++) {
-      int x; cin >> x;
-      adj[x].push_back(lab);
-      adj[N + i].push_back(x); // 역방향 간선
-      capacity[x][lab] = 1;
-    }
-  }
-}
-
-int EdmondsKarp(int source, int sink) {
-  int totalFlow = 0;
-  while (true) {
-    vector<int> parent(MAX, -1);
-    queue<int> q;
-    parent[source] = source;
-    q.push(source);
-
-    while (!q.empty() && parent[sink] == -1) {
-      int curr = q.front();
-      q.pop();
-
-      for (int next : adj[curr]) {
-        // 용량이 남아있고 아직 방문하지 않았다면
-        if (capacity[curr][next] - flow[curr][next] > 0 && parent[next] == -1) {
-          q.push(next);
-          parent[next] = curr;
-          if (next == sink)
-            break; // 싱크에 도달했다면 중단
-        }
+    for (Edge *edge : adj[cur]) {
+      if (level[edge->to] == -1 && edge->residual() > 0) {
+        level[edge->to] = level[cur] + 1;
+        q.push(edge->to);
       }
     }
+  }
 
-    if (parent[sink] == -1)
-      break; // 더 이상 증가 경로가 없다면 종료
+  return level[T] != -1;
+}
 
-    int amount = INF;
-    for (int p = sink; p != source; p = parent[p]) {
-      amount = min(amount, capacity[parent[p]][p] - flow[parent[p]][p]);
+int dfs(int cur, int flow) {
+  if (cur == T) return flow;
+  for (int &i = work[cur]; i < adj[cur].size(); ++i) {
+    Edge *edge = adj[cur][i];
+    if (level[edge->to] == level[cur] + 1 && edge->residual() > 0) {
+      int df = dfs(edge->to, min(flow, edge->residual()));
+      if (df > 0) {
+        edge->addFlow(df);
+        return df;
+      }
     }
-    for (int p = sink; p != source; p = parent[p]) {
-      flow[parent[p]][p] += amount;
-      flow[p][parent[p]] -= amount;
+  }
+  return 0;
+}
+
+int dinic() {
+  int totalFlow = 0;
+
+  while (bfs()) {
+    fill(work, work + MAX, 0);
+    while (int flow = dfs(S, INF)) {
+      totalFlow += flow;
     }
-    totalFlow += amount;
   }
 
   return totalFlow;
 }
 
+void init() {
+  for (int i = 0; i < MAX; ++i) {
+    for (Edge *edge : adj[i]) delete edge;
+    adj[i].clear();
+  }
+}
+
+void input() {
+  cin >> N;
+  S = 0; T = N + 4;
+
+  for (int i = 1; i <= N; ++i) {
+    addEdge(S, i, 1);
+  }
+
+  for (int i = 1; i <= 3; ++i) {
+    int x; cin >> x;
+    addEdge(N + i, T, x);
+  }
+
+  for (int i = 1; i <= 3; ++i) {
+    int m; cin >> m;
+    for (int j = 0; j < m; ++j) {
+      int assist; cin >> assist;
+      addEdge(assist, N + i, 1);
+    }
+  }
+}
+
 void solve() {
-  cout << EdmondsKarp(S, T) << '\n';
-  
-  for (int i = 1; i <= N; i++) {
-    for (int j = N + 1; j <= N + 3; j++) {
-      if (flow[i][j] > 0) {
-        cout << i << " ";
-        if (j == N + 1) cout << "A\n";
-        else if (j == N + 2) cout << "B\n";
-        else if (j == N + 3) cout << "C\n";
+  cout << dinic() << '\n';
+
+  for (int i = 1; i <= N; ++i) {
+    for (Edge *e : adj[i]) {
+      if (e->flow > 0) {
+        cout << i << ' ';
+        if (e->to == N + 1) cout << "A\n";
+        else if (e->to == N + 2) cout << "B\n";
+        else if (e->to == N + 3) cout << "C\n";
         break;
       }
     }
@@ -121,8 +138,7 @@ int main() {
   // (void)freopen("input.txt", "r", stdin);
   
   ios_base::sync_with_stdio(false);
-  cin.tie(0);
-  cout.tie(0);
+  cin.tie(0); cout.tie(0);
 
   int Tc;
   cin >> Tc;
@@ -131,6 +147,5 @@ int main() {
     input();
     solve();
   }
-
   return 0;
 }
