@@ -12,13 +12,6 @@
 
 using namespace std;
 
-struct cmp {
-  bool operator()(pii a, pii b) {
-    if(a.X == b.X) return a.Y < b.Y;
-    else return a.X < b.X;
-  }
-};
-
 // 숫자, 인덱스
 priority_queue<pii, vector<pii>, greater<pii>> pq;
 int N;
