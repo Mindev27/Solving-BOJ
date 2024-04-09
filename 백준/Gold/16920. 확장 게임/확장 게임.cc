@@ -82,20 +82,9 @@ void BFS(int idx) {
   }
 }
 
-void check() {
-  for(int i = 0; i < N; i++) {
-    for(int j = 0; j < M; j++) {
-      cout << board[i][j] << " ";
-    }
-    cout << '\n';
-  }
-  cout << '\n';
-}
-
 void solve() {
   memset(visited, false, sizeof(visited));
   while (true) {
-    // check();
     bool progress = false;
     for (int i = 1; i <= P; i++) {
       if (!q[i].empty()) {
@@ -105,7 +94,6 @@ void solve() {
     }
     if (!progress) break;
   }
-  // check();
   for(int i = 1; i <= P; i++) {
     cout << cnt[i] << ' ';
   }
