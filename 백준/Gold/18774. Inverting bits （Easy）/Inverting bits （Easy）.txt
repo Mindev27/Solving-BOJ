@@ -1,0 +1,65 @@
+get A
+get B
+get C
+get D
+get E
+get F
+get G
+
+mov X G
+shl X 1
+or X F
+shl X 1
+or X E
+shl X 1
+or X D
+shl X 1
+or X C
+shl X 1
+or X B
+shl X 1
+or X A
+
+not X
+
+mov A X
+and A 1
+
+shr X 1
+
+mov B X
+and B 1
+
+shr X 1
+
+mov C X
+and C 1
+
+shr X 1
+
+mov D X
+and D 1
+
+shr X 1
+
+mov E X
+and E 1
+
+shr X 1
+
+mov F X
+and F 1
+
+shr X 1
+
+mov G X
+and G 1
+
+
+put A
+put B
+put C
+put D
+put E
+put F
+put G
