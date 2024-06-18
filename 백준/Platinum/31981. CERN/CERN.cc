@@ -30,9 +30,9 @@ vector<Query> query;
 vector<int> v;
 int n, q;
 ll res = 0;
-ll ans[100005];
-ll cnt[100005];
-ll table[100005];
+ll ans[500005];
+ll cnt[500005];
+ll table[500005];
 
 void input() {
   cin >> n >> q;
