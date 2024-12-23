@@ -8,7 +8,7 @@ using namespace std;
 #define pll pair<ll, ll>
 
 const int INF = 1e9 + 5;
-const int SIZE = 1 << 21;
+const int SIZE = 1 << 22;
 int N, K;
 pii seg[SIZE];
 int ans[2000005];
