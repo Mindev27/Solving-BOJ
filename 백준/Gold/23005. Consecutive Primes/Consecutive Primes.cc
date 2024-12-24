@@ -7,7 +7,7 @@ using namespace std;
 #define pii pair<int, int>
 #define pll pair<ll, ll>
 
-const ll MAX_P = 10000000;
+const ll MAX_P = 1030303000;
 vector<ll> primes;
 
 void makePrime() {
@@ -28,20 +28,26 @@ void solve() {
     ll Z;
     cin >> Z;
 
-    ll sqrtZ = sqrt(Z);
-    auto it = upper_bound(primes.begin(), primes.end(), sqrtZ);
-    int startIdx = distance(primes.begin(), it) - 5;
+    ll l = 0;
+    ll r = primes.size() - 2;
+    ll ans = -1;
 
-    ll res = 0;
-    for (int i = max(0, startIdx); i < primes.size() - 1; i++) {
-        if (primes[i] > sqrt(Z)) break;
-        ll product = primes[i] * primes[i + 1];
-        if (product <= Z) res = product;
-        else break;
+    while (l <= r) {
+        ll mid = l + (r - l) / 2;
+        ll val = primes[mid] * primes[mid + 1];
+
+        if (val <= Z) {
+            ans = val;
+            l = mid + 1;
+        }
+        else {
+            r = mid - 1;
+        }
     }
 
-    cout << res << "\n";
+    cout << ans << "\n";
 }
+
 
 int main() {
     ios_base::sync_with_stdio(false);
