@@ -6,7 +6,6 @@ using namespace std;
 #define Y second
 #define pii pair<int,int>
 #define pll pair<ll,ll>
-#define double long double
 
 int n, w, h;
 vector<pii> p; // 별
