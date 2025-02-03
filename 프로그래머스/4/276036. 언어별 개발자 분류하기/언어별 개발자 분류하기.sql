@@ -1,0 +1,22 @@
+-- 이건 가지고있는 능력 테이블 
+WITH H AS (
+    SELECT *
+    FROM DEVELOPERS D
+    JOIN SKILLCODES S ON (D.SKILL_CODE & S.CODE) > 0
+)
+
+SELECT *
+FROM (
+    SELECT 
+        CASE
+            WHEN 'Front End' IN (SELECT CATEGORY FROM H WHERE H.ID = D.ID) AND 'Python' IN (SELECT NAME FROM H WHERE H.ID = D.ID) THEN 'A'
+            WHEN 'C#' IN (SELECT NAME FROM H WHERE H.ID = D.ID) THEN 'B'
+            WHEN 'Front End' IN (SELECT CATEGORY FROM H WHERE H.ID = D.ID) THEN 'C'
+            ELSE 'F'
+        END AS GRADE,
+        ID,
+        EMAIL
+    FROM DEVELOPERS D
+) AS X
+WHERE GRADE != 'F'
+ORDER BY GRADE ASC, ID ASC;
