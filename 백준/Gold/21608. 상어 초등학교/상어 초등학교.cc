@@ -50,10 +50,6 @@ void solve() {
                 else if (maxLike == curLike && maxVacant < curVac) {
                     posX = x; posY = y; maxLike = curLike; maxVacant = curVac;
                 }
-                else if (maxLike == curLike && maxVacant == curVac) {
-                    if (posX > x) { posX = x; posY = y; maxLike = curLike; maxVacant = curVac; }
-                    else if (posX == x && posY > y) { posX = x; posY = y; maxLike = curLike; maxVacant = curVac; }
-                }
             }
         }
         board[posX][posY] = cur;
