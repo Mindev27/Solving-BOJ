@@ -27,10 +27,6 @@ void bellmanford(ll s) {
                 money[to] = money[from] - w;
             }
         }
-        // for (int j = 0; j < N; j++) {
-        //     cout << (money[j] == -INF ? -1 : money[j]) << ' ';
-        // }
-        // cout << '\n';
     }
 
     // 마지막에 돌릴때 사이클이 생기는 to 노드를 모두 기록
@@ -85,9 +81,6 @@ void solve() {
         }
     }
 
-    // for (auto& [from, to, w] : edges) {
-    //     cout << from << ' ' << to << ' ' << w << '\n';
-    // }
 
     bellmanford(st);
 
@@ -101,7 +94,6 @@ void solve() {
     bool flag = false;
     for (ll i = 0; i < N; i++) {
         if (inf[i]) {
-            // cout << i << '\n';
             if (BFS(i)) {
                 flag = true;
                 break;
@@ -113,8 +105,6 @@ void solve() {
     else cout << money[ed] << '\n';
 
 }
-
-
 
 int main() {
     ios_base::sync_with_stdio(false);
