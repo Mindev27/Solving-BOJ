@@ -7,13 +7,6 @@ using namespace std;
 #define pii pair<int,int>
 #define pll pair<ll,ll> 
 
-#include <algorithm>
-#include <iostream>
-#include <queue>
-#include <set>
-#include <vector>
-using namespace std;
-
 int N, M;
 vector<int> A;
 set<vector<int>> visited;
