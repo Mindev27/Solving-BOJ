@@ -7,39 +7,16 @@ using namespace std;
 #define pii pair<int,int>
 #define pll pair<ll,ll>
 
-
-bool used[20];
-string s, path;
-vector<string> res;
-
-void dfs(int depth) {
-    if (depth == s.size()) {
-        res.push_back(path);
-        return;
-    }
-    char last = 0;
-    for (int i = 0; i < s.size(); i++) {
-        if (used[i] || s[i] == last) continue;
-        used[i] = true;
-        path.push_back(s[i]);
-        dfs(depth + 1);
-        path.pop_back();
-        used[i] = false;
-        last = s[i];
-    }
-}
-
 void solve() {
     int n;
     cin >> n;
     while (n--) {
+        string s;
         cin >> s;
         sort(s.begin(), s.end());
-        path.clear();
-        res.clear();
-        memset(used, 0, sizeof(used));
-        dfs(0);
-        for (auto &x : res) cout << x << '\n';
+        do {
+            cout << s << '\n';
+        } while (next_permutation(s.begin(), s.end()));
     }
 }
 
