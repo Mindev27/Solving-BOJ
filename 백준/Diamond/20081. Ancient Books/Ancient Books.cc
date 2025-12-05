@@ -21,46 +21,106 @@ s가 0이 아니면 어캄쇼
 
 일단 0일때 짜
 
+풀이 보고 풂
 */
+const int MAXN = 1000005;
 
-ll minimum_walk(std::vector<int> p, int s) {
-    int n = p.size();
+int n;
+int a[MAXN];
+int compId[MAXN];
+int compL[MAXN];
+int compR[MAXN];
+int vis[MAXN];
+int compCnt;
 
-    ll d = 0;
+void extendInterval(int &l, int &r) {
+    int leftPos = min(compL[compId[l]], compL[compId[r]]);
+    int rightPos = max(compR[compId[l]], compR[compId[r]]);
+
+    while (l > leftPos || r < rightPos) {
+        if (l > leftPos) {
+            --l;
+            leftPos = min(leftPos, compL[compId[l]]);
+            rightPos = max(rightPos, compR[compId[l]]);
+        }
+        else {
+            ++r;
+            leftPos = min(leftPos, compL[compId[r]]);
+            rightPos = max(rightPos, compR[compId[r]]);
+        }
+    }
+}
+
+ll minimum_walk(vector<int> p, int s) {
+    n = (int)p.size();
+
+    ll ans = 0;
     for (int i = 0; i < n; i++) {
-        d += abs(i - p[i]);
+        a[i] = p[i];
+        ans += abs(i - p[i]);
     }
 
-    vector<int> prefixMax(n), suffixMin(n);
-    vector<char> suffixNoT(n);
+    if (ans == 0)
+        return 0;
 
-    prefixMax[0] = p[0];
-    for (int i = 1; i < n; i++) {
-        prefixMax[i] = max(prefixMax[i - 1], p[i]);
-    }
+    // vis 초기화
+    for (int i = 0; i < n; i++)
+        vis[i] = 0;
 
-    suffixMin[n - 1] = p[n - 1];
-    for (int i = n - 2; i >= 0; i--) {
-        suffixMin[i] = min(suffixMin[i + 1], p[i]);
-    }
+    int nonTrivL = s, nonTrivR = s;
+    compCnt = 0;
+    for (int i = 0; i < n; i++) {
+        if (vis[i])
+            continue;
 
-    suffixNoT[n - 1] = (p[n - 1] != (n - 1));
-    for (int i = n - 2; i >= 0; i--) {
-        suffixNoT[i] = suffixNoT[i + 1] || (p[i] != i);
-    }
+        ++compCnt;
+        compL[compCnt] = compR[compCnt] = i;
 
-    ll cnt = 0;
-    for (int i = 0; i < n - 1; i++) {
-        bool noCross = (prefixMax[i] <= i) && (suffixMin[i + 1] >= i + 1);
+        int u = i;
+        while (!vis[u]) {
+            vis[u] = 1;
+            compId[u] = compCnt;
+            compL[compCnt] = min(compL[compCnt], u);
+            compR[compCnt] = max(compR[compCnt], u);
+            u = a[u];
+        }
 
-        bool noright = suffixNoT[i + 1];
-
-        if (noCross && noright) {
-            cnt++;
+        if (a[i] != i) {
+            nonTrivL = min(nonTrivL, compL[compCnt]);
+            nonTrivR = max(nonTrivR, compR[compCnt]);
         }
     }
 
-    return d + 2LL * cnt;
+    int l = s, r = s;
 
-    return 0;
+    while (true) {
+        extendInterval(l, r);
+
+        int lp = l, rp = r;
+        int lq = l, rq = r;
+        ll lCost = 0, rCost = 0;
+
+        while (lp > nonTrivL && rp == r) {
+            --lp;
+            extendInterval(lp, rp);
+            lCost += 2;
+        }
+
+        while (rq < nonTrivR && lq == l) {
+            ++rq;
+            extendInterval(lq, rq);
+            rCost += 2;
+        }
+
+        if (rp == r) {
+            ans += lCost + rCost;
+            break;
+        }
+
+        ans += min(lCost, rCost);
+        l = lp;
+        r = rp;
+    }
+
+    return ans;
 }
