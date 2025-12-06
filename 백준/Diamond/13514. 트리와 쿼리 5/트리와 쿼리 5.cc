@@ -1,156 +1,123 @@
+// Writer : exzile_27
+
 #include <bits/stdc++.h>
 using namespace std;
 
 #define ll long long
 #define X first
 #define Y second
-#define pii pair<int,int>
-#define pll pair<ll,ll>
+#define pii pair<int, int>
+#define pll pair<ll, ll>
 
-int N, M;
-int subSz[200005];
-bool visited[200005];
-vector<vector<pii>> g(200005);
-bool colorArr[200005];                  // 노드 색
-multiset<int> stCent[200005];           // c에서 흰노드와 거리
-int cPar[200005];                       // cPar[i] := i의 부모
-vector<pair<int, int>> cdDist[200005];   // 분해하면서 만난 다른것과 거리 목록록
+// https://justicehui.github.io/hard-algorithm/2020/08/25/centroid/
+// centroid for education
 
-int get_size(int cur, int par) {
-    subSz[cur] = 1;
-    for (const auto& nxt : g[cur]) {
-        int v = nxt.X;
-        if (v == par || visited[v]) continue;
-        subSz[cur] += get_size(v, cur);
+int n, m;
+
+int sz[100005];         // 서브 트리의 크기
+vector<int> g[100005];  // 인접 리스트
+vector<pii> up[100005]; // (센트로이드 c, 거리 d)
+vector<int> color;      // 검은색 0, 흰색 1
+multiset<int> S[100005];
+bool used[100005];
+
+// b가 부모고 부모 빼고 재귀적으로 서브트리 크기 구해짐
+int getSize(int v, int b = -1) { // 서브 트리의 크기를 구하는 DFS
+    sz[v] = 1;
+    for (auto i : g[v]) if (i != b && !used[i]) {
+        sz[v] += getSize(i, v);
     }
-    return subSz[cur];
+    return sz[v];
 }
 
-int get_cent(int cur, int par, int thr) {
-    for (const auto& p : g[cur]) {
-        int v = p.X;
-        if (v == par || visited[v]) continue;
-        if (subSz[v] > thr) return get_cent(v, cur, thr);
-    }
-    return cur;
+// 자식 노드가 아닌것들 중에서 전체(cap)의 절반이상이 되는 정점을 고르기
+int getCent(int v, int b = -1, int cap = n) { // 센트로이드를 찾는 DFS
+    for (auto i : g[v])
+        if (i != b && !used[i] && sz[i] * 2 > cap)
+            return getCent(i, v, cap);
+    return v;
 }
 
-void dfsDist(int c, int start, int par, int distVal) {
-    cdDist[start].push_back({ c, distVal });
-    for (auto& nx : g[start]) {
-        int nv = nx.X;
-        if (nv == par || visited[nv]) continue;
-        dfsDist(c, nv, start, distVal + 1);
-    }
-}
+// 이번레벨의 센트로이드에 대해서 전체를 dfs하면서 v에 대해 up[v] 생성
+void dfs(int v, int p, int dist, int c) {
+    up[v].push_back({c, dist});
 
-int buildCentroid(int start) {
-    int sz = get_size(start, -1);
-    int c = get_cent(start, -1, sz / 2);
-
-    visited[c] = true;
-    dfsDist(c, c, -1, 0);
-
-    for (auto& nx : g[c]) {
-        int v = nx.X;
-        if (visited[v]) continue;
-        int subCent = buildCentroid(v);
-        cPar[subCent] = c;
-    }
-
-    return c;
-}
-
-int getDist(int u, int v) {
-    static unordered_map<int, int> mem;
-    mem.clear();
-    for (auto& p : cdDist[u]) {
-        int c = p.X;
-        int d = p.Y;
-        mem[c] = d;
-    }
-
-    int ret = INT_MAX;
-    for (auto& p : cdDist[v]) {
-        int c = p.X;
-        int d = p.Y;
-        if (mem.find(c) != mem.end()) {
-            int cand = mem[c] + d;
-            if (cand < ret) ret = cand;
-        }
-    }
-    return ret;
-}
-
-void updateColor(int v) {
-    colorArr[v] = !colorArr[v];
-
-    for (auto& p : cdDist[v]) {
-        int c = p.X;        // 센트로이드
-        int d = p.Y;        // dist(v,c)
-        if (colorArr[v]) {
-            stCent[c].insert(d); // 흰색으로 바뀌면 삽입
-        }
-        else {
-            // 검정으로 바뀌면 제거
-            auto it = stCent[c].find(d);
-            if (it != stCent[c].end()) {
-                stCent[c].erase(it);
-            }
-        }
+    for (int nxt : g[v]) {
+        if (nxt == p || used[nxt])
+            continue;
+        dfs(nxt, v, dist + 1, c);
     }
 }
 
-// 가장 가까운 흰색 찾기
-int query(int v) {
-    int ans = INT_MAX;
-    bool isExist = false;
+void build(int v) {
+    int tot = getSize(v, -1);
+    int c = getCent(v, -1, tot);
 
-    for (auto& p : cdDist[v]) {
-        int c = p.X;   // 센트로이드
-        int dvc = p.Y; // dist(v, c)
+    used[c] = true;
+    dfs(c, -1, 0, c);
 
-        if (!stCent[c].empty()) {
-            isExist = true;
-            int cand = *(stCent[c].begin()) + dvc;
-            if (cand < ans) ans = cand;
-        }
+    for (int nxt : g[c]) {
+        if (used[nxt])
+            continue;
+        build(nxt);
     }
-
-    if (!isExist) return -1;
-    return ans;
 }
 
 void solve() {
-    cin >> N;
-    for (int i = 1; i <= N; i++) {
-        g[i].clear();
-        colorArr[i] = false; // 검정
-        stCent[i].clear();
-        cdDist[i].clear();
-        cPar[i] = i;
-        visited[i] = false;
+    cin >> n;
+    color.assign(n + 1, 0); // 처음엔 다 검은색
+    for (int i = 0; i < n - 1; i++) {
+        int x, y;
+        cin >> x >> y;
+        g[x].push_back(y);
+        g[y].push_back(x);
     }
 
-    for (int i = 0; i < N - 1; i++) {
-        int u, v;
-        cin >> u >> v;
-        g[u].push_back({ v,1 });
-        g[v].push_back({ u,1 });
-    }
+    build(1);
+    // for(int i = 1; i <= n; i++) {
+    //     cout << "i : " << i << "\n";
+    //     for(auto [c,d] : up[i]) {
+    //         cout << "(" << c << ", " << d << ")" << '\n';
+    //     }
+    // }
 
-    int rootC = buildCentroid(1);
-
-    cin >> M;
-    while (M--) {
-        int t, v;
-        cin >> t >> v;
-        if (t == 1) {
-            updateColor(v);
+    cin >> m;
+    while (m--) {
+        int op, v;
+        cin >> op >> v;
+        if (op == 1) { // 토글
+            // cout << "Color : " << op << ' ' << v << '\n';
+            if (color[v] == 0) { // 검은색 -> 흰색
+                color[v] = 1;
+                // up을 순회하면서 (c,d)에 대해서 S[c]에 d집어넣기
+                for (auto &[c, d] : up[v]) {
+                    S[c].insert(d);
+                    // cout << c << "에 " << d << " insert\n";
+                }
+            }
+            else {
+                color[v] = 0;
+                for (auto &[c, d] : up[v]) {
+                    S[c].erase(S[c].find(d)); // d 찾아서 지우기
+                    // cout << c << "에 " << d << " erase\n";
+                }
+            }
         }
-        else if (t == 2) {
-            int ans = query(v);
-            cout << ans << "\n";
+        else { // 질의
+            // cout << "Q: " <<  op << ' ' << v << '\n';
+            // 이때마다 현재 up으로 순회하면서
+            // S[c].begin() 젤 작은거랑 현재 거리 d를 더한값중 최소 출력
+            int minVal = 999999999;
+            for (auto &[c, d] : up[v]) {
+                if (S[c].empty())
+                    continue;
+                minVal = min(minVal, *S[c].begin() + d);
+                // cout << "c: " << c << " d: " << d << " res : " <<
+                // *S[c].begin() + d << '\n';
+            }
+            if (minVal == 999999999)
+                cout << "-1\n";
+            else cout << minVal << '\n';
         }
     }
 }
@@ -162,8 +129,9 @@ int main() {
 
     int Tc = 1;
     // cin >> Tc;
-    while (Tc--) {
+    for (int tt = 1; tt <= Tc; tt++) {
         solve();
     }
+
     return 0;
 }
