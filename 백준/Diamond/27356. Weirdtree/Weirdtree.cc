@@ -8,137 +8,116 @@ using namespace std;
 const int MAXN = 300005;
 
 struct Node {
-    ll mx, mx2, cntMx, sum;
+    ll max1, max2, cntMax, sum, lazy;
 };
 
 int N_;
 int arr_[MAXN];
 Node tree[MAXN * 4];
 
-static Node f(const Node &a, const Node &b) {
-    Node r;
+static Node merge(const Node &a, const Node &b) {
+    Node r{};
     r.sum = a.sum + b.sum;
-    if(a.mx == b.mx) {
-        r.mx = a.mx;
-        r.cntMx = a.cntMx + b.cntMx;
-        r.mx2 = max(a.mx2, b.mx2);
+    r.lazy = 0;
+    if(a.max1 == b.max1) {
+        r.max1 = a.max1;
+        r.cntMax = a.cntMax + b.cntMax;
+        r.max2 = max(a.max2, b.max2);
     }
-    else if(a.mx > b.mx) {
-        r.mx = a.mx;
-        r.cntMx = a.cntMx;
-        r.mx2 = max(a.mx2, b.mx);
+    else if(a.max1 > b.max1) {
+        r.max1 = a.max1;
+        r.cntMax = a.cntMax;
+        r.max2 = max(a.max2, b.max1);
     }
     else {
-        r.mx = b.mx;
-        r.cntMx = b.cntMx;
-        r.mx2 = max(a.mx, b.mx2);
+        r.max1 = b.max1;
+        r.cntMax = b.cntMax;
+        r.max2 = max(a.max1, b.max2);
     }
     return r;
 }
 
 static void buildTree(int node, int s, int e) {
     if(s == e) {
-        tree[node] = { (ll)arr_[s], LLONG_MIN, 1, (ll)arr_[s] };
+        tree[node] = { (ll)arr_[s], 0, 1, (ll)arr_[s], 0 };
         return;
     }
     int m = (s + e) >> 1;
     buildTree(node * 2, s, m);
     buildTree(node * 2 + 1, m + 1, e);
-    tree[node] = f(tree[node * 2], tree[node * 2 + 1]);
+    tree[node] = merge(tree[node * 2], tree[node * 2 + 1]);
 }
 
-static void applyChmin(int node, ll v) {
-    if(tree[node].mx <= v) return;
-    tree[node].sum -= tree[node].cntMx * (tree[node].mx - v);
-    tree[node].mx = v;
+static void applyLazy(int node, ll v) {
+    tree[node].max1 -= v;
+    tree[node].sum -= v * tree[node].cntMax;
+    tree[node].lazy += v;
 }
 
-static void push(int node) {
-    for(int c : {node * 2, node * 2 + 1}) {
-        if(tree[c].mx > tree[node].mx) {
-            applyChmin(c, tree[node].mx);
-        }
-    }
-}
-
-static void updateChmin(int node, int s, int e, int l, int r, ll v) {
-    if(r < s || e < l || tree[node].mx <= v) return;
-    if(l <= s && e <= r && tree[node].mx2 < v) {
-        applyChmin(node, v);
+static void push(int node, int s, int e) {
+    if(tree[node].lazy == 0 || s == e) {
+        tree[node].lazy = 0;
         return;
     }
-    push(node);
-    int m = (s + e) >> 1;
-    updateChmin(node * 2, s, m, l, r, v);
-    updateChmin(node * 2 + 1, m + 1, e, l, r, v);
-    tree[node] = f(tree[node * 2], tree[node * 2 + 1]);
+    ll parentMax = tree[node].max1 + tree[node].lazy;
+    for(int c : {node * 2, node * 2 + 1}) {
+        if(tree[c].max1 == parentMax) {
+            applyLazy(c, tree[node].lazy);
+        }
+    }
+    tree[node].lazy = 0;
 }
 
 static void pointSet(int node, int s, int e, int i, ll x) {
     if(s == e) {
-        tree[node] = { x, LLONG_MIN, 1, x };
+        tree[node] = { x, 0, 1, x, 0 };
         return;
     }
-    push(node);
+    push(node, s, e);
     int m = (s + e) >> 1;
     if(i <= m) pointSet(node * 2, s, m, i, x);
     else pointSet(node * 2 + 1, m + 1, e, i, x);
-    tree[node] = f(tree[node * 2], tree[node * 2 + 1]);
+    tree[node] = merge(tree[node * 2], tree[node * 2 + 1]);
 }
 
 static ll querySum(int node, int s, int e, int l, int r) {
     if(r < s || e < l) return 0;
     if(l <= s && e <= r) return tree[node].sum;
-    push(node);
+    push(node, s, e);
     int m = (s + e) >> 1;
     return querySum(node * 2, s, m, l, r) + querySum(node * 2 + 1, m + 1, e, l, r);
 }
 
-static ll queryMax(int node, int s, int e, int l, int r) {
-    if(r < s || e < l) return 0;
-    if(l <= s && e <= r) return tree[node].mx;
-    push(node);
+static Node queryRange(int node, int s, int e, int l, int r) {
+    if(r < s || e < l) return { 0, 0, 0, 0, 0 };
+    if(l <= s && e <= r) return tree[node];
+    push(node, s, e);
     int m = (s + e) >> 1;
-    return max(queryMax(node * 2, s, m, l, r), queryMax(node * 2 + 1, m + 1, e, l, r));
+    Node a = queryRange(node * 2, s, m, l, r);
+    Node b = queryRange(node * 2 + 1, m + 1, e, l, r);
+    if(a.cntMax == 0) return b;
+    if(b.cntMax == 0) return a;
+    return merge(a, b);
 }
 
-static ll calcCost(int node, int s, int e, int l, int r, ll v) {
-    if(r < s || e < l || tree[node].mx <= v) return 0;
-    if(l <= s && e <= r && tree[node].mx2 < v) {
-        return tree[node].cntMx * (tree[node].mx - v);
-    }
-    push(node);
-    int m = (s + e) >> 1;
-    return calcCost(node * 2, s, m, l, r, v) + calcCost(node * 2 + 1, m + 1, e, l, r, v);
-}
+static void updateSubtract(int node, int s, int e, int l, int r, ll value, ll &bonus, ll maxValue) {
+    if(value + (bonus > 0 ? 1 : 0) == 0) return;
+    if(e < l || s > r) return;
+    if(l <= s && e <= r && tree[node].max1 != maxValue) return;
 
-static ll queryCntVal(int node, int s, int e, int l, int r, ll V) {
-    if(r < s || e < l || tree[node].mx < V) return 0;
-    if(l <= s && e <= r) {
-        if(tree[node].mx == V) return tree[node].cntMx;
-        if(tree[node].mx2 < V) return 0;
-    }
-    push(node);
-    int m = (s + e) >> 1;
-    return queryCntVal(node * 2, s, m, l, r, V) + queryCntVal(node * 2 + 1, m + 1, e, l, r, V);
-}
-
-static void decLeftmost(int node, int s, int e, int l, int r, ll V, ll &k) {
-    if(k <= 0) return;
-    if(r < s || e < l || tree[node].mx < V) return;
-    if(s == e) {
-        if(tree[node].mx == V) {
-            tree[node].mx -= 1;
-            tree[node].sum -= 1;
-            k -= 1;
-        }
+    if(l <= s && e <= r
+       && (bonus == 0 || bonus >= (ll)(e - s + 1))
+       && (tree[node].max2 == 0 || tree[node].max1 - value - (bonus > 0 ? 1 : 0) > tree[node].max2)) {
+        ll dec = value + (bonus > 0 ? 1 : 0);
+        applyLazy(node, dec);
+        bonus -= (bonus > 0 ? 1 : 0) * tree[node].cntMax;
         return;
     }
-    push(node);
+    push(node, s, e);
     int m = (s + e) >> 1;
-    decLeftmost(node * 2, s, m, l, r, V, k);
-    decLeftmost(node * 2 + 1, m + 1, e, l, r, V, k);
-    tree[node] = f(tree[node * 2], tree[node * 2 + 1]);
+    updateSubtract(node * 2, s, m, l, r, value, bonus, maxValue);
+    updateSubtract(node * 2 + 1, m + 1, e, l, r, value, bonus, maxValue);
+    tree[node] = merge(tree[node * 2], tree[node * 2 + 1]);
 }
 
 
@@ -150,20 +129,21 @@ void initialise(int N, int Q, int h[]) {
 
 void cut(int l, int r, int k) {
     ll kk = k;
-    ll M = queryMax(1, 1, N_, l, r);
-    if(M == 0) return;
-    ll lo = 0, hi = M;
-    while(lo < hi) {
-        ll mid = (lo + hi) / 2;
-        if(calcCost(1, 1, N_, l, r, mid) <= kk) hi = mid;
-        else lo = mid + 1;
-    }
-    ll V = lo;
-    ll cost = calcCost(1, 1, N_, l, r, V);
-    updateChmin(1, 1, N_, l, r, V);
-    kk -= cost;
-    if(V > 0 && kk > 0) {
-        decLeftmost(1, 1, N_, l, r, V, kk);
+    while(kk > 0) {
+        Node q = queryRange(1, 1, N_, l, r);
+        if(q.max1 == 0) break;
+        if((q.max1 - q.max2) <= kk / q.cntMax) {
+            ll cost = (q.max1 - q.max2) * q.cntMax;
+            kk -= cost;
+            ll bonus = 0;
+            updateSubtract(1, 1, N_, l, r, q.max1 - q.max2, bonus, q.max1);
+        }
+        else {
+            ll divResult = kk / q.cntMax;
+            ll bonus = kk - divResult * q.cntMax;
+            updateSubtract(1, 1, N_, l, r, divResult, bonus, q.max1);
+            kk = 0;
+        }
     }
 }
 
